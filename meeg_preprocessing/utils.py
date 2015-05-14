@@ -155,8 +155,7 @@ def setup_provenance(script=None, results_dir='results', config=None,
     """
     import inspect
     if script is None:
-        file_path = inspect.stack()[1][1]
-        script = file_path[file_path.rfind('/') + 1:]
+        script = inspect.stack()[1][1]
         if script[0] == '<':
             script = '__main__'
 
@@ -167,11 +166,15 @@ def setup_provenance(script=None, results_dir='results', config=None,
         import matplotlib
         matplotlib.use('Agg')
 
-    if not op.isfile(script):
+    if script != '__main__' and not op.isfile(script):
         raise ValueError('sorry, this is not a script!')
 
-    step = op.splitext(op.split(script)[1])[0]
-    results_dir = op.join(results_dir, step)
+    if script != '__main__':
+        step = op.splitext(op.split(script)[1])[0]
+        results_dir = op.join(results_dir, step)
+    else:
+        step = '__main__'
+
     if not op.exists(results_dir):
         logger.info('generating results dir')
         os.mkdir(results_dir)
@@ -190,10 +193,14 @@ def setup_provenance(script=None, results_dir='results', config=None,
     logger.info('... writing runtime info to: %s' % runtime_log)
     std_logfile = op.join(logging_dir, 'run_output.log')
 
-    script_code = op.join(logging_dir, 'script.py')
-    with open(script_code, 'w') as fid:
+    if script != '__main__':
         with open(script) as script_fid:
             source_code = script_fid.read()
+    else:
+        source_code = 'setup_provenance()'
+
+    script_code = op.join(logging_dir, 'script.py')
+    with open(script_code, 'w') as fid:
         fid.write(source_code)
     logger.info('... logging source code of calling script')
 
