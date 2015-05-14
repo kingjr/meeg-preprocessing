@@ -125,15 +125,17 @@ def create_run_id():
     return time.strftime('%Y-%m-%d_%H-%M-%S', time.gmtime())
 
 
-def setup_provenance(script, results_dir, config=None, use_agg=True):
+def setup_provenance(script=None, results_dir='results', config=None,
+                     use_agg=True):
     """Setup provenance tracking
 
     Parameters
     ----------
-    script : str
-        The script that was executed.
-    results_dir : str
-        The results directory.
+    script : str, None, optional
+        The script that was executed. If None, get the file name calling it.
+        Defaults to None.
+    results_dir : str, optional.
+        The results directory. Defaults to 'results'.
     config : None | str
         The name of the config file. By default, the function expects the
         config to be under `__script__/' named `config.py`
@@ -151,6 +153,16 @@ def setup_provenance(script, results_dir, config=None, use_agg=True):
     - sets log file for sterr output
     - writes log file with runtime information
     """
+    import inspect
+    if script is None:
+        file_path = inspect.stack()[1][1]
+        script = file_path[file_path.rfind('/') + 1:]
+        if script[0] == '<':
+            script = '__main__'
+
+    if not op.exists(results_dir):
+        os.mkdir(results_dir)
+
     if use_agg is True:
         import matplotlib
         matplotlib.use('Agg')
